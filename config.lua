@@ -6,18 +6,35 @@
 
 require("lvim.lsp.manager").setup("marksman")
 
+-- My mappings
+vim.api.nvim_set_keymap('', '<Space>', '<Nop>', { noremap = true, silent = true })
+vim.keymap.set("n", "]d", vim.diagnostic.goto_next)
+vim.keymap.set("n", "[d", vim.diagnostic.goto_prev)
+vim.keymap.set("n", "<C-n>", "<cmd>NvimTreeToggle<CR>")
+vim.keymap.set("n", "<C-g>", "<cmd>Telescope live_grep<CR>")
+vim.keymap.set("n", "<C-p>", "<cmd>Telescope find_files<CR>")
+vim.g.copilot_no_tab_map = true
+vim.api.nvim_set_keymap("i", "<C-l>", 'copilot#Accept("<CR>")', { silent = true, expr = true })
+vim.wo.relativenumber = true
+vim.api.nvim_set_keymap('n', 'H', ':BufferLineCyclePrev<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', 'L', ':BufferLineCycleNext<CR>', { noremap = true, silent = true })
+
 lvim.plugins = {
   "ChristianChiarulli/swenv.nvim",
   "stevearc/dressing.nvim",
   "mfussenegger/nvim-dap-python",
   "nvim-neotest/neotest",
   "nvim-neotest/neotest-python",
+  "nvim-neotest/nvim-nio",
 
   -- Copilot
   {
     "zbirenbaum/copilot.lua",
     cmd = "Copilot",
     event = "InsertEnter",
+    config = function()
+      require("copilot").setup({})
+    end,
   },
   {
     "zbirenbaum/copilot-cmp",
@@ -47,12 +64,12 @@ lvim.plugins = {
   },
   {
     "tpope/vim-surround",
-
     -- make sure to change the value of `timeoutlen` if it's not triggering correctly, see https://github.com/tpope/vim-surround/issues/117
-    setup = function()
-      vim.o.timeoutlen = 1000
+    init = function()
+      vim.o.timeoutlen = 100
     end
   },
+
 }
 
 -- automatically install python syntax highlighting
@@ -62,14 +79,23 @@ lvim.builtin.treesitter.ensure_installed = {
 
 -- setup formatting
 local formatters = require "lvim.lsp.null-ls.formatters"
-formatters.setup { { name = "black" }, }
+formatters.setup {
+  { name = "black" },
+  { name = "prettier" }
+}
 lvim.format_on_save.enabled = true
-lvim.format_on_save.pattern = { "*.py", "*.lua", "*.rs", "*.json", "*.yml", "*.yaml" }
+lvim.format_on_save.pattern = { "*.py", "*.lua", "*.rs", "*.json", "*.yml", "*.yaml", "*.js", "*.jsx", "*.ts", "*.tsx" }
 
 
 -- setup linting
 local linters = require "lvim.lsp.null-ls.linters"
-linters.setup { { command = "flake8", filetypes = { "python" } } }
+linters.setup {
+  -- Mypy (type-checking)
+  { command = "mypy", filetypes = { "python" } },
+
+  -- Flake8 (general linting)
+  { command = "flake8", filetypes = { "python" } },
+}
 
 -- setup debug adapter
 lvim.builtin.dap.active = true
@@ -79,20 +105,20 @@ pcall(function()
 end)
 
 -- setup testing
-require("neotest").setup({
-  adapters = {
-    require("neotest-python")({
-      -- Extra arguments for nvim-dap configuration
-      -- See https://github.com/microsoft/debugpy/wiki/Debug-configuration-settings for values
-      dap = {
-        justMyCode = false,
-        console = "integratedTerminal",
-      },
-      args = { "--log-level", "DEBUG", "--quiet" },
-      runner = "pytest",
-    })
-  }
-})
+-- require("neotest").init({
+--   adapters = {
+--     require("neotest-python")({
+--       -- Extra arguments for nvim-dap configuration
+--       -- See https://github.com/microsoft/debugpy/wiki/Debug-configuration-settings for values
+--       dap = {
+--         justMyCode = false,
+--         console = "integratedTerminal",
+--       },
+--       args = { "--log-level", "DEBUG", "--quiet" },
+--       runner = "pytest",
+--     })
+--   }
+-- })
 
 lvim.builtin.which_key.mappings["dm"] = { "<cmd>lua require('neotest').run.run()<cr>",
   "Test Method" }
@@ -230,26 +256,11 @@ lvim.builtin.which_key.mappings["C"] = {
   D = { "<cmd>lua require'crates'.show_dependencies_popup()<cr>", "[crates] show dependencies" },
 }
 
-lvim.plugins = {
-}
-
 
 
 local opts = { noremap = true, silent = true }
 vim.api.nvim_set_keymap("n", "<c-s>", "<cmd>lua require('copilot.suggestion').toggle_auto_trigger()<CR>", opts)
 
--- My mappings
-vim.api.nvim_set_keymap('', '<Space>', '<Nop>', { noremap = true, silent = true })
-vim.keymap.set("n", "]d", vim.diagnostic.goto_next)
-vim.keymap.set("n", "[d", vim.diagnostic.goto_prev)
-vim.keymap.set("n", "<C-n>", "<cmd>NvimTreeToggle<CR>")
-vim.keymap.set("n", "<C-g>", "<cmd>Telescope live_grep<CR>")
-vim.keymap.set("n", "<C-p>", "<cmd>Telescope find_files<CR>")
-vim.g.copilot_no_tab_map = true
-vim.api.nvim_set_keymap("i", "<C-l>", 'copilot#Accept("<CR>")', { silent = true, expr = true })
-vim.wo.relativenumber = true
-vim.api.nvim_set_keymap('n', 'H', ':BufferLineCyclePrev<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'L', ':BufferLineCycleNext<CR>', { noremap = true, silent = true })
 
 
 
